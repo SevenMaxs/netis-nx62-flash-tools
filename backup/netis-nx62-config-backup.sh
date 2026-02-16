@@ -40,9 +40,9 @@ NC='\033[0m'
 TIMESTAMP=$(date +%Y%m%d_%H%M%S)
 DEVICE_MODEL="Netis_NX62"
 ARCHIVE_NAME="${DEVICE_MODEL}_config_backup_${TIMESTAMP}.tar.gz"
-FINAL_ARCHIVE="/tmp/${ARCHIVE_NAME}"
-BACKUP_DIR="/tmp/${DEVICE_MODEL}_config_backup_${TIMESTAMP}"
-TEMP_DIR="/tmp/${DEVICE_MODEL}_config_temp_${TIMESTAMP}"
+FINAL_ARCHIVE="/tmp/tmp/${ARCHIVE_NAME}"
+BACKUP_DIR="/tmp/tmp/${DEVICE_MODEL}_config_backup_${TIMESTAMP}"
+TEMP_DIR="/tmp/tmp/${DEVICE_MODEL}_config_temp_${TIMESTAMP}"
 
 # Список файлов и директорий для бекапа
 CONFIG_FILES="
@@ -116,7 +116,7 @@ cat /etc/openwrt_version > "$BACKUP_DIR/system_info/openwrt_version.txt" 2>/dev/
     df -h
     echo ""
     echo "Mount Points:"
-    mount | grep -E "(rootfs|\/overlay|\/rom|\/tmp)"
+    mount | grep -E "(rootfs|\/overlay|\/rom|\/tmp\/tmp)"
 } > "$BACKUP_DIR/system_info/system_info.txt"
 
 # 2. Сохраняем информацию о сетевых интерфейсах
@@ -342,7 +342,7 @@ if [ -f "$FINAL_ARCHIVE" ]; then
     echo -e "  ${YELLOW}scp -O useradmin@192.168.1.1:$FINAL_ARCHIVE ./${NC}"
 else
     echo -e "  ${YELLOW}scp -O -r useradmin@192.168.1.1:$BACKUP_DIR ./${NC}"
-    echo -e "  ${YELLOW}ssh useradmin@192.168.1.1 \"tar -czf - -C /tmp $(basename $BACKUP_DIR)\" > ./${ARCHIVE_NAME}${NC}"
+    echo -e "  ${YELLOW}ssh useradmin@192.168.1.1 \"tar -czf - -C /tmp/tmp $(basename $BACKUP_DIR)\" > ./${ARCHIVE_NAME}${NC}"
 fi
 echo -e ""
 
