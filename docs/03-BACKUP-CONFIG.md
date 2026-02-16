@@ -37,7 +37,7 @@ ssh netis-nx62
 
 ### Шаг 2: Скачивание скрипта
 ```bash
-cd /tmp
+cd /tmp/tmp
 wget https://raw.githubusercontent.com/SevenMaxs/netis-nx62-flash-tools/main/backup/netis-nx62-config-backup.sh
 chmod +x netis-nx62-config-backup.sh
 ```
@@ -50,7 +50,7 @@ chmod +x netis-nx62-config-backup.sh
 ### Шаг 4: Скачивание архива на компьютер
 ```bash
 # Выйдите из SSH (Ctrl+D) и выполните на компьютере:
-scp -O netis-nx62:/tmp/Netis_NX62_config_backup_*.tar.gz ./
+scp -O netis-nx62:/tmp/tmp/Netis_NX62_config_backup_*.tar.gz ./
 ```
 
 ---
@@ -68,13 +68,13 @@ wget https://raw.githubusercontent.com/SevenMaxs/netis-nx62-flash-tools/main/bac
 
 ### Шаг 2: Копирование скрипта на роутер
 ```bash
-scp -O netis-nx62-config-backup.sh netis-nx62:/tmp/
+scp -O netis-nx62-config-backup.sh netis-nx62:/tmp/tmp/
 ```
 
 ### Шаг 3: Подключение к роутеру и запуск
 ```bash
 ssh netis-nx62
-cd /tmp
+cd /tmp/tmp
 chmod +x netis-nx62-config-backup.sh
 ./netis-nx62-config-backup.sh
 ```
@@ -82,7 +82,7 @@ chmod +x netis-nx62-config-backup.sh
 ### Шаг 4: Скачивание архива
 ```bash
 # На компьютере (после выхода из SSH):
-scp -O netis-nx62:/tmp/Netis_NX62_config_backup_*.tar.gz ./
+scp -O netis-nx62:/tmp/tmp/Netis_NX62_config_backup_*.tar.gz ./
 ```
 
 ---
@@ -98,11 +98,11 @@ scp -O netis-nx62:/tmp/Netis_NX62_config_backup_*.tar.gz ./
    - Порт: `22`
    - Логин: `useradmin`
    - Пароль: ваш пароль
-   - Скопируйте файл в `/tmp/`
+   - Скопируйте файл в `/tmp/tmp/`
 
 3. **Подключитесь через PuTTY** и выполните:
    ```bash
-   cd /tmp
+   cd /tmp/tmp
    chmod +x netis-nx62-config-backup.sh
    ./netis-nx62-config-backup.sh
    ```
@@ -117,9 +117,9 @@ scp -O netis-nx62:/tmp/Netis_NX62_config_backup_*.tar.gz ./
 ========================================
    Config Backup Tool for Netis NX62   
 ========================================
-Директория: /tmp/Netis_NX62_config_backup_20260215_115245
-Временная директория: /tmp/Netis_NX62_config_temp_20260215_115245
-Финальный архив: /tmp/Netis_NX62_config_backup_20260215_115245.tar.gz
+Директория: /tmp/tmp/Netis_NX62_config_backup_20260215_115245
+Временная директория: /tmp/tmp/Netis_NX62_config_temp_20260215_115245
+Финальный архив: /tmp/tmp/Netis_NX62_config_backup_20260215_115245.tar.gz
 ========================================
 
 [1/4] Сохранение информации о системе...
@@ -140,7 +140,7 @@ scp -O netis-nx62:/tmp/Netis_NX62_config_backup_*.tar.gz ./
 ========================================
 ✅ Все временные файлы успешно удалены
 
-📦 Финальный архив: /tmp/Netis_NX62_config_backup_20260215_115245.tar.gz
+📦 Финальный архив: /tmp/tmp/Netis_NX62_config_backup_20260215_115245.tar.gz
    Размер: 1.2M
    MD5: 5a7b9c8d1e2f3a4b5c6d7e8f9a0b1c2d
    Файлов в архиве: 45
@@ -151,7 +151,7 @@ scp -O netis-nx62:/tmp/Netis_NX62_config_backup_*.tar.gz ./
   • Ошибки: 0
 
 Скачайте архив на компьютер:
-  scp -O useradmin@192.168.1.1:/tmp/Netis_NX62_config_backup_20260215_115245.tar.gz ./
+  scp -O useradmin@192.168.1.1:/tmp/tmp/Netis_NX62_config_backup_20260215_115245.tar.gz ./
 
 ========================================
 🎉 CONFIG БЕКАП ВЫПОЛНЕН ИДЕАЛЬНО!
@@ -193,7 +193,7 @@ md5sum -c config_files_checksums.txt
 ## ❓ Часто задаваемые вопросы
 
 **Q: Сколько места нужно на роутере?**  
-A: Минимум 50 МБ свободного места в `/tmp`
+A: Минимум 50 МБ свободного места в `/tmp/tmp`
 
 **Q: Можно ли делать бекап без интернета?**  
 A: Да, используйте способ 2 с копированием через SCP
