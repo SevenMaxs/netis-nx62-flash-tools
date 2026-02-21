@@ -78,6 +78,9 @@ CONFIG_FILES="
 /etc/motd
 /etc/openwrt_release
 /etc/os-release
+/etc/shells
+/etc/iproute2/rt_tables
+/etc/sing-box/config.json
 "
 
 echo -e "${BLUE}========================================${NC}"
