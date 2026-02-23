@@ -46,6 +46,7 @@ readonly TARGET_PATH="mediatek/filogic"      # для URL
 readonly TARGET_NAME="mediatek-filogic"      # для имени файла
 readonly MODEL="netcore_n60-pro"
 readonly BASE_URL="https://downloads.openwrt.org/releases/${OPENWRT_VER}/targets/${TARGET_PATH}/"
+readonly FW_DIR="/tmp/openwrt_images_netis_nx62"
 
 # Имена файлов для скачивания
 readonly UBOOT_FIP="openwrt-${OPENWRT_VER}-${TARGET_NAME}-${MODEL}-bl31-uboot.fip"
@@ -207,27 +208,75 @@ TFTP_OPTIONS=\"--secure --create\"" | sudo tee "$CONFIG_FILE" > /dev/null
 # -------------------------------------------------------------------
 download_files() {
     echo -e "${GREEN}=== Скачивание образов OpenWRT v${OPENWRT_VER} ===${NC}"
-    mkdir -p "$TMP_DIR"
-    cd "$TMP_DIR"
-
-    local files=("$UBOOT_FIP" "$PRELOADER_BIN" "$RECOVERY_ITB" "$SYSUPGRADE_ITB" "$KMODS_URL")
-    local all_exist=true
-
-    for file in "${files[@]}"; do
-        if [ ! -f "$file" ]; then
-            all_exist=false
-            echo "Скачивание $file ..."
-            wget --show-progress -q "${BASE_URL}${file}" || {
-                echo -e "${RED}Ошибка скачивания $file${NC}"
-                exit 1
-            }
-        else
-            echo "Файл $file уже существует."
+    
+    # Проверяем наличие интернета
+    if ! check_internet_access; then
+        echo -e "${YELLOW}Доступ в интернет отсутствует. Проверяем локальные файлы...${NC}"
+        
+        # Проверяем существование директории
+        if [ ! -d "$FW_DIR" ]; then
+            echo -e "${RED}Ошибка: Локальная директория $FW_DIR не существует${NC}"
+            echo -e "${RED}Необходимо наличие следующих файлов:${NC}"
+            echo -e "${RED}  - $UBOOT_FIP${NC}"
+            echo -e "${RED}  - $PRELOADER_BIN${NC}"
+            echo -e "${RED}  - $RECOVERY_ITB${NC}"
+            echo -e "${RED}  - $SYSUPGRADE_ITB${NC}"
+            echo -e "${RED}  - $MTD_RW_APK${NC}"
+            exit 1
         fi
-    done
+        
+        # Проверяем наличие всех необходимых файлов
+        local missing_files=()
+        local files=("$UBOOT_FIP" "$PRELOADER_BIN" "$RECOVERY_ITB" "$SYSUPGRADE_ITB" "$MTD_RW_APK")
+        
+        for file in "${files[@]}"; do
+            if [ ! -f "$FW_DIR/$file" ]; then
+                missing_files+=("$file")
+            fi
+        done
+        
+        # Если есть отсутствующие файлы, выводим сообщение об ошибке
+        if [ ${#missing_files[@]} -gt 0 ]; then
+            echo -e "${RED}Ошибка: Отсутствуют необходимые файлы в $FW_DIR${NC}"
+            echo -e "${RED}Необходимо наличие следующих файлов:${NC}"
+            for missing_file in "${missing_files[@]}"; do
+                echo -e "${RED}  - $missing_file${NC}"
+            done
+            exit 1
+        fi
+        
+        # Копируем файлы из локальной директории в временную
+        mkdir -p "$TMP_DIR"
+        cd "$TMP_DIR"
+        echo "Копирование файлов из $FW_DIR..."
+        cp "$FW_DIR"/* .
+        
+        echo -e "${GREEN}Все образы успешно скопированы из локальной директории${NC}"
+        ls -lh "$TMP_DIR"
+    else
+        # Если интернет есть, используем обычную логику загрузки
+        mkdir -p "$TMP_DIR"
+        cd "$TMP_DIR"
 
-    echo -e "${GREEN}Все образы успешно загружены в $TMP_DIR${NC}"
-    ls -lh "$TMP_DIR"
+        local files=("$UBOOT_FIP" "$PRELOADER_BIN" "$RECOVERY_ITB" "$SYSUPGRADE_ITB" "$KMODS_URL")
+        local all_exist=true
+
+        for file in "${files[@]}"; do
+            if [ ! -f "$file" ]; then
+                all_exist=false
+                echo "Скачивание $file ..."
+                wget --show-progress -q "${BASE_URL}${file}" || {
+                    echo -e "${RED}Ошибка скачивания $file${NC}"
+                    exit 1
+                }
+            else
+                echo "Файл $file уже существует."
+            fi
+        done
+
+        echo -e "${GREEN}Все образы успешно загружены в $TMP_DIR${NC}"
+        ls -lh "$TMP_DIR"
+    fi
 }
 
 # -------------------------------------------------------------------
