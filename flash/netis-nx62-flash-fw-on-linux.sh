@@ -417,7 +417,7 @@ copy_and_write_preloader() {
         # Установка из локального .apk файла
         ssh -i "$SSH_KEY" -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
             "${OWRT_USER}@${ROUTER_IP}" \
-            "apk add --allow-untrusted /tmp/$MTD_RW_APK" || {
+            "apk add --allow-untrusted --no-network --force-missing-repositories --force-non-repository /tmp/$MTD_RW_APK" || {
             echo -e "${RED}Ошибка при установке kmod-mtd-rw из локального файла.${NC}"
             exit 1
         }
