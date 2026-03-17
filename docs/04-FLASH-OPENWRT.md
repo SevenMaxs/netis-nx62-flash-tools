@@ -11,7 +11,7 @@
 - ✅ Проводное Ethernet-подключение к роутеру
 - ✅ Выполнена настройка SSH доступа ([01-SSH-CONNECTION.md](01-SSH-CONNECTION.md))
 - ✅ Роутер работает под управлением **стоковой прошивки**
-- ✅ Доступ в интернет для скачивания образов OpenWRT
+- ✅ Доступ в интернет для скачивания образов OpenWRT **ИЛИ** заранее скачанные файлы прошивки
 
 ## 📦 Что делает скрипт
 
@@ -129,7 +129,7 @@ sudo ./netis-nx62-flash-fw-on-linux.sh
 Далее скрипт выполнит все этапы автоматически:
 
 ```
-=== Скачивание образов OpenWRT v25.12.0-rc4 ===
+=== Скачивание образов OpenWRT v25.12.0 ===
 === Копирование загрузчика на роутер и запись в flash ===
 === Подготовка TFTP recovery ===
 === Перезагрузка роутера и ожидание recovery ===
@@ -146,7 +146,7 @@ sudo ./netis-nx62-flash-fw-on-linux.sh
 
 ```
 === Прошивка успешно завершена! ===
-Роутер Netis NX62 теперь работает под управлением OpenWRT 25.12.0-rc4.
+Роутер Netis NX62 теперь работает под управлением OpenWRT 25.12.0.
 Адрес для доступа: http://192.168.1.1 (логин root, без пароля).
 ```
 
@@ -161,11 +161,11 @@ sudo ./netis-nx62-flash-fw-on-linux.sh
 
 ### Этап 2: Скачивание образов
 Скрипт загружает следующие файлы:
-- **bl31-uboot.fip** — загрузчик U-Boot (записывается в раздел FIP)
-- **preloader.bin** — препроцессор (записывается в раздел BL2)
-- **initramfs-recovery.itb** — recovery-образ для первой загрузки
-- **squashfs-sysupgrade.itb** — постоянная прошивка
-- **kmod-mtd-rw.apk** — модуль для записи в защищённые разделы
+- **openwrt-25.12.0-mediatek-filogic-netcore_n60-pro-bl31-uboot.fip** — загрузчик U-Boot (записывается в раздел FIP)
+- **openwrt-25.12.0-mediatek-filogic-netcore_n60-pro-preloader.bin** — препроцессор (записывается в раздел BL2)
+- **openwrt-25.12.0-mediatek-filogic-netcore_n60-pro-initramfs-recovery.itb** — recovery-образ для первой загрузки
+- **openwrt-25.12.0-mediatek-filogic-netcore_n60-pro-squashfs-sysupgrade.itb** — постоянная прошивка
+- **kmod-mtd-rw-6.12.71.2021.02.28~e8776739-r1.apk** — модуль для записи в защищённые разделы
 
 ### Этап 3: Запись загрузчика FIP (на стоковой прошивке)
 - Копирование `bl31-uboot.fip` на роутер через SCP
@@ -218,6 +218,108 @@ TFTP_OPTIONS="--secure --create"
 sudo systemctl restart tftpd-hpa
 sudo systemctl enable tftpd-hpa
 ```
+
+---
+
+## ⚙️ Параметры конфигурации скрипта
+
+Скрипт использует следующие параметры конфигурации:
+
+### Основные параметры:
+- **Версия OpenWRT**: 25.12.0
+- **Целевая архитектура**: mediatek/filogic
+- **Модель устройства**: netcore_n60-pro
+- **Базовый URL для скачивания**: https://downloads.openwrt.org/releases/25.12.0/targets/mediatek/filogic/
+
+### Имена файлов образов:
+- **Загрузчик (FIP)**: openwrt-25.12.0-mediatek-filogic-netcore_n60-pro-bl31-uboot.fip
+- **Прелоадер (BL2)**: openwrt-25.12.0-mediatek-filogic-netcore_n60-pro-preloader.bin
+- **Recovery-образ**: openwrt-25.12.0-mediatek-filogic-netcore_n60-pro-initramfs-recovery.itb
+- **Sysupgrade-образ**: openwrt-25.12.0-mediatek-filogic-netcore_n60-pro-squashfs-sysupgrade.itb
+- **Модуль kmod-mtd-rw**: kmod-mtd-rw-6.12.71.2021.02.28~e8776739-r1.apk
+
+### Параметры подключения:
+- **Пользователь стокового роутера**: useradmin
+- **Пользователь OpenWRT**: root
+- **IP-адрес роутера**: 192.168.1.1
+- **Путь к SSH-ключу**: ~/.ssh/dropbear_key
+
+### Сетевые параметры:
+- **IP-адрес ПК**: 192.168.1.254
+- **Маска подсети**: 24
+- **Директория TFTP-сервера**: /srv/tftp
+
+---
+
+## 📥 Использование локальных файлов прошивки (без интернета)
+
+Если у Вас **отсутствует доступ в интернет**, скрипт поддерживает работу с **локально скачанными файлами** прошивки.
+
+### Подготовка локальных файлов
+
+1. **Создайте директорию** для файлов прошивки:
+
+```bash
+mkdir -p /tmp/openwrt_images_netis_nx62
+```
+
+> ⚠️ **Важно:** Скрипт ожидает файлы именно в этой директории: `/tmp/openwrt_images_netis_nx62`
+
+2. **Скачайте все необходимые файлы** в эту директорию:
+
+```bash
+cd /tmp/openwrt_images_netis_nx62
+
+# Загрузчик (FIP)
+wget https://downloads.openwrt.org/releases/25.12.0/targets/mediatek/filogic/openwrt-25.12.0-mediatek-filogic-netcore_n60-pro-bl31-uboot.fip
+
+# Прелоадер (BL2)
+wget https://downloads.openwrt.org/releases/25.12.0/targets/mediatek/filogic/openwrt-25.12.0-mediatek-filogic-netcore_n60-pro-preloader.bin
+
+# Recovery-образ
+wget https://downloads.openwrt.org/releases/25.12.0/targets/mediatek/filogic/openwrt-25.12.0-mediatek-filogic-netcore_n60-pro-initramfs-recovery.itb
+
+# Sysupgrade-образ
+wget https://downloads.openwrt.org/releases/25.12.0/targets/mediatek/filogic/openwrt-25.12.0-mediatek-filogic-netcore_n60-pro-squashfs-sysupgrade.itb
+
+# Модуль kmod-mtd-rw
+wget https://downloads.openwrt.org/releases/25.12.0/targets/mediatek/filogic/kmods/6.12.71-1-60d938adcb727697d3015e4285d4c290/kmod-mtd-rw-6.12.71.2021.02.28~e8776739-r1.apk
+```
+
+3. **Проверьте наличие всех файлов**:
+
+```bash
+ls -lh /tmp/openwrt_images_netis_nx62/
+```
+
+Должны присутствовать:
+- `openwrt-25.12.0-mediatek-filogic-netcore_n60-pro-bl31-uboot.fip`
+- `openwrt-25.12.0-mediatek-filogic-netcore_n60-pro-preloader.bin`
+- `openwrt-25.12.0-mediatek-filogic-netcore_n60-pro-initramfs-recovery.itb`
+- `openwrt-25.12.0-mediatek-filogic-netcore_n60-pro-squashfs-sysupgrade.itb`
+- `kmod-mtd-rw-6.12.71.2021.02.28~e8776739-r1.apk`
+
+### Запуск скрипта с локальными файлами
+
+После подготовки файлов просто запустите скрипт:
+
+```bash
+sudo ./netis-nx62-flash-fw-on-linux.sh
+```
+
+Скрипт **автоматически обнаружит отсутствие интернета** и:
+- Проверит наличие всех необходимых файлов в `/tmp/openwrt_images_netis_nx62`
+- Скопирует файлы во временную директорию для работы
+- Продолжит прошивку в обычном режиме
+
+> 💡 **Совет:** Если скрипт сообщает об отсутствии файлов, проверьте, что все 5 файлов присутствуют в директории `/tmp/openwrt_images_netis_nx62` и их имена **точно совпадают** с ожидаемыми.
+
+### Альтернативный способ загрузки файлов
+
+Если у вас есть доступ к интернету с другого компьютера, вы можете:
+1. Скачать файлы на другом устройстве
+2. Передать их на ПК для прошивки через USB-накопитель
+3. Поместить в директорию `/tmp/openwrt_images_netis_nx62`
 
 ---
 
