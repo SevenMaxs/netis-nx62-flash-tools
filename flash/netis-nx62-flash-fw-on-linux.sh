@@ -41,7 +41,7 @@ YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
 # Конфигурация OpenWRT
-readonly OPENWRT_VER="25.12.0-rc5"
+readonly OPENWRT_VER="25.12.0"
 readonly TARGET_PATH="mediatek/filogic"      # для URL
 readonly TARGET_NAME="mediatek-filogic"      # для имени файла
 readonly MODEL="netcore_n60-pro"
@@ -514,7 +514,7 @@ auto_sysupgrade() {
     echo "Форматирование UBI раздела..."
     ssh -i "$SSH_KEY" -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
         "${OWRT_USER}@${ROUTER_IP}" \
-        "ubidetach -p /dev/mtd4 && ubiformat -y /dev/mtd4 && ubiattach -p /dev/mtd4 && ubimkvol /dev/ubi0 -n 0 -N ubootenv -s 128KiB && ubimkvol /dev/ubi0 -n 1 -N ubootenv2 -s 128KiB" || {
+        "ubidetach -p /dev/mtd4 && ubiformat -y /dev/mtd4 && ubiattach -p /dev/mtd4 && ubimkvol /dev/ubi0 -n 0 -N ubootenv -S 2 && ubimkvol /dev/ubi0 -n 1 -N ubootenv2 -S 2" || {
         echo -e "${RED}Ошибка при форматировании UBI.${NC}"
         exit 1
     }
