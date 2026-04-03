@@ -31,10 +31,16 @@
 Самый простой способ — запустить скрипт одной командой с вашего ПК:
 
 ```bash
+# С интерактивным подтверждением
 ssh root@192.168.1.1 "wget -qO- https://raw.githubusercontent.com/SevenMaxs/netis-nx62-flash-tools/main/flash/netis-nx62-update-fw-on-router.sh | sh"
+
+# С автоматическим подтверждением (без вопросов)
+ssh root@192.168.1.1 "wget -qO- https://raw.githubusercontent.com/SevenMaxs/netis-nx62-flash-tools/main/flash/netis-nx62-update-fw-on-router.sh | sh -s -- -y"
 ```
 
 > 💡 **Совет:** Скрипт скачает все необходимые образы прямо на роутер и выполнит прошивку. Вам не нужно ничего скачивать вручную.
+
+> ⚠️ **Важно:** При запуске через pipe скрипт читает ввод пользователя напрямую из терминала (`/dev/tty`), поэтому подтверждение должно работать корректно.
 
 ---
 
