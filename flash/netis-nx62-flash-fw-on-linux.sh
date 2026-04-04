@@ -41,7 +41,7 @@ YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
 # Конфигурация OpenWRT
-readonly OPENWRT_VER="25.12.0"
+readonly OPENWRT_VER="25.12.2"
 readonly TARGET_PATH="mediatek/filogic"      # для URL
 readonly TARGET_NAME="mediatek-filogic"      # для имени файла
 readonly MODEL="netcore_n60-pro"
@@ -55,7 +55,7 @@ readonly RECOVERY_ITB="openwrt-${OPENWRT_VER}-${TARGET_NAME}-${MODEL}-initramfs-
 readonly SYSUPGRADE_ITB="openwrt-${OPENWRT_VER}-${TARGET_NAME}-${MODEL}-squashfs-sysupgrade.itb"
 
 # Конфигурация модуля kmod-mtd-rw
-readonly KERNEL_VER="6.12.71"
+readonly KERNEL_VER="6.12.74"
 readonly KMODS_PATH="kmods/${KERNEL_VER}-1-60d938adcb727697d3015e4285d4c290"
 readonly MTD_RW_APK="kmod-mtd-rw-${KERNEL_VER}.2021.02.28~e8776739-r1.apk"
 readonly KMODS_URL="${KMODS_PATH}/${MTD_RW_APK}"

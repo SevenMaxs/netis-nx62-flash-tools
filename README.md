@@ -9,13 +9,15 @@
 │   ├── netis-nx62-mtd-backup.sh             # Дамп всех MTD разделов
 │   └── netis-nx62-config-backup.sh          # Бекап конфигурационных файлов
 ├── flash/      # Скрипты для прошивки
-│   └── netis-nx62-flash-fw-on-linux.sh      # Полная прошивка с ПК (Linux)
+│   ├── netis-nx62-flash-fw-on-linux.sh      # Полная прошивка с ПК (Linux)
+│   └── netis-nx62-update-fw-on-router.sh    # Обновление прошивки на роутере (On-Router)
 ├── docs/       # Документация
 │   ├── 01-SSH-CONNECTION.md                 # Настройка SSH доступа
 │   ├── 01-SSH-CONNECTION-WINDOWS.md         # Настройка SSH доступа на Windows
 │   ├── 02-BACKUP-MTD.md                     # Инструкция по бекапу MTD
 │   ├── 03-BACKUP-CONFIG.md                  # Инструкция по бекапу конфигураций
-│   └── 04-FLASH-OPENWRT.md                  # Прошивка с ПК через TFTP
+│   ├── 04-FLASH-OPENWRT.md                  # Прошивка с ПК через TFTP
+│   └── 05-UPDATE-FW-ON-ROUTER.md            # Обновление прошивки на роутере
 └── LICENSE     # Лицензия проекта
 ```
 
@@ -45,6 +47,7 @@
 | [02-BACKUP-MTD.md](docs/02-BACKUP-MTD.md) | Полное резервное копирование MTD разделов |
 | [03-BACKUP-CONFIG.md](docs/03-BACKUP-CONFIG.md) | Бекап конфигурационных файлов OpenWRT |
 | [04-FLASH-OPENWRT.md](docs/04-FLASH-OPENWRT.md) | Автоматическая прошивка с ПК на Linux через TFTP |
+| [05-UPDATE-FW-ON-ROUTER.md](docs/05-UPDATE-FW-ON-ROUTER.md) | Обновление прошивки непосредственно на роутере |
 
 ## 👥 Участники
 
@@ -68,6 +71,7 @@
 [📘 Настройка SSH](docs/01-SSH-CONNECTION.md) •
 [📦 Бекап MTD](docs/02-BACKUP-MTD.md) •
 [📋 Бекап конфигураций](docs/03-BACKUP-CONFIG.md) •
-[🚀 Прошивка с ПК](docs/04-FLASH-OPENWRT.md)
+[🚀 Прошивка с ПК](docs/04-FLASH-OPENWRT.md) •
+[🔄 Обновление на роутере](docs/05-UPDATE-FW-ON-ROUTER.md)
 
 </div>
