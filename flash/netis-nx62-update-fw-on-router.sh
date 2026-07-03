@@ -136,15 +136,10 @@ check_openwrt_version() {
 # Функция установки kmod-mtd-rw
 # -----------------------------------------------------------------------------
 install_mtd_rw() {
-    info "Установка модуля kmod-mtd-rw для записи в защищённые разделы..."
-
-    # Проверяем, загружен ли уже модуль
     if lsmod | grep -q mtd_rw 2>/dev/null; then
-        success "Модуль mtd-rw уже загружен"
         return 0
     fi
 
-    # Определяем пакетный менеджер
     local pkg_manager=""
     if command -v apk >/dev/null 2>&1; then
         pkg_manager="apk"
@@ -154,28 +149,17 @@ install_mtd_rw() {
         die "Не найден пакетный менеджер (apk или opkg)"
     fi
 
-    info "Используемый пакетный менеджер: $pkg_manager"
-
-    # Обновляем списки пакетов и устанавливаем
-    info "Обновление репозиториев (может занять время)..."
     if [ "$pkg_manager" = "apk" ]; then
-        apk update || warn "Не удалось обновить репозитории apk, пробуем установить..."
-        info "Установка kmod-mtd-rw..."
-        apk add kmod-mtd-rw || die "Не удалось установить kmod-mtd-rw"
+        apk update >/dev/null 2>&1 || true
+        apk add kmod-mtd-rw >/dev/null 2>&1 || die "Не удалось установить kmod-mtd-rw"
     else
-        opkg update || warn "Не удалось обновить репозитории opkg, пробуем установить..."
-        info "Установка kmod-mtd-rw..."
-        opkg install kmod-mtd-rw || die "Не удалось установить kmod-mtd-rw"
+        opkg update >/dev/null 2>&1 || true
+        opkg install kmod-mtd-rw >/dev/null 2>&1 || die "Не удалось установить kmod-mtd-rw"
     fi
 
-    # Загружаем модуль
-    info "Загрузка модуля mtd-rw..."
     if ! insmod mtd-rw i_want_a_brick=1; then
-        die "Не удалось загрузить модуль mtd-rw. Убедитесь, что он установлен."
+        die "Не удалось загрузить модуль mtd-rw"
     fi
-
-    success "Модуль mtd-rw успешно загружен (i_want_a_brick=1)"
-    return 0
 }
 
 # -----------------------------------------------------------------------------
@@ -212,86 +196,73 @@ check_disk_space() {
 # Функция скачивания образов OpenWRT
 # -----------------------------------------------------------------------------
 download_images() {
-    info "Скачивание образов OpenWRT v${OPENWRT_VER}..."
-    
+    local label
+    local file
+    local size
+    local size_hr
+
     mkdir -p "$FW_DIR" || die "Не удалось создать директорию $FW_DIR"
     cd "$FW_DIR" || die "Не удалось перейти в директорию $FW_DIR"
-    
-    local files_to_download="$UBOOT_FIP $PRELOADER_BIN $SYSUPGRADE_ITB"
-    
-    for file in $files_to_download; do
-        if [ -f "$file" ]; then
-            info "Файл $file уже существует, пропускаем"
-        else
-            info "Скачивание: $file"
-            if wget -q --no-check-certificate -O "$file" "$BASE_URL$file"; then
-                success "$file скачан"
-            else
+
+    echo -e "${BLUE}📦 Загрузка образов...${NC}"
+
+    for pair in "FIP:$UBOOT_FIP" "Preloader:$PRELOADER_BIN" "Sysupgrade:$SYSUPGRADE_ITB"; do
+        label="${pair%%:*}"
+        file="${pair##*:}"
+
+        if [ ! -f "$file" ]; then
+            if ! wget -q --no-check-certificate -O "$file" "$BASE_URL$file"; then
                 rm -f "$file" 2>/dev/null
                 die "Ошибка скачивания $file"
             fi
         fi
-    done
-    
-    # Проверка размеров файлов
-    for file in $files_to_download; do
+
         if [ ! -f "$file" ]; then
-            die "Файл $file не найден после скачивания"
+            die "Файл $file не найден"
         fi
-        
-        local size=$(wc -c < "$file" 2>/dev/null | tr -d ' ')
+
+        size=$(wc -c < "$file" 2>/dev/null | tr -d ' ')
         if [ -z "$size" ] || [ "$size" -lt 1000 ] 2>/dev/null; then
-            die "Файл $file слишком мал или не удалось определить размер"
+            die "Файл $file слишком мал"
         fi
-        info "$file: $size байт"
+
+        if [ "$size" -ge 1048576 ]; then
+            size_hr="$((size / 1048576)).$(( (size % 1048576) * 10 / 1048576 )) MB"
+        elif [ "$size" -ge 1024 ]; then
+            size_hr="$((size / 1024)) KB"
+        else
+            size_hr="${size} B"
+        fi
+
+        printf "   ${GREEN}✅${NC} %-14s %s\n" "$label" "$size_hr"
     done
-    
-    success "Все образы успешно загружены в $FW_DIR"
-    ls -lh "$FW_DIR"
-    return 0
 }
 
 # -----------------------------------------------------------------------------
 # Функция прошивки FIP и preloader
 # -----------------------------------------------------------------------------
 flash_bootloader() {
-    info "Начало прошивки загрузчика..."
-    
-    # Проверяем, загружен ли модуль mtd-rw
     if ! lsmod | grep -q mtd_rw 2>/dev/null; then
         install_mtd_rw
     fi
-    
-    # Запись preloader в BL2
-    info "Запись preloader в раздел BL2..."
+
     if [ ! -f "$FW_DIR/$PRELOADER_BIN" ]; then
         die "Файл preloader не найден: $FW_DIR/$PRELOADER_BIN"
     fi
-    
-    if ! mtd erase bl2; then
-        warn "Не удалось выполнить erase bl2, пробуем записать напрямую..."
-    fi
-    
+    mtd erase bl2 2>/dev/null || true
     if ! mtd write "$FW_DIR/$PRELOADER_BIN" bl2; then
-        die "Ошибка записи preloader в раздел BL2"
+        die "Ошибка записи preloader в BL2"
     fi
-    success "Preloader успешно записан в BL2"
-    
-    # Запись U-Boot в FIP
-    info "Запись U-Boot в раздел FIP..."
+
     if [ ! -f "$FW_DIR/$UBOOT_FIP" ]; then
         die "Файл U-Boot не найден: $FW_DIR/$UBOOT_FIP"
     fi
-    
-    if ! mtd erase fip; then
-        warn "Не удалось выполнить erase fip, пробуем записать напрямую..."
-    fi
-    
+    mtd erase fip 2>/dev/null || true
     if ! mtd write "$FW_DIR/$UBOOT_FIP" fip; then
-        die "Ошибка записи U-Boot в раздел FIP"
+        die "Ошибка записи U-Boot в FIP"
     fi
-    success "U-Boot успешно записан в FIP"
-    
+
+    success "Загрузчик: BL2 ✓  FIP ✓"
     return 0
 }
 
@@ -299,26 +270,14 @@ flash_bootloader() {
 # Функция выполнения sysupgrade
 # -----------------------------------------------------------------------------
 do_sysupgrade() {
-    info "Выполнение sysupgrade..."
-    
     if [ ! -f "$FW_DIR/$SYSUPGRADE_ITB" ]; then
         die "Файл sysupgrade не найден: $FW_DIR/$SYSUPGRADE_ITB"
     fi
-    
-    local size=$(wc -c < "$FW_DIR/$SYSUPGRADE_ITB" 2>/dev/null | tr -d ' ')
-    info "Размер образа sysupgrade: $size байт"
-    
+
     warn "ВНИМАНИЕ: Сейчас начнётся прошивка. НЕ ОТКЛЮЧАЙТЕ ПИТАНИЕ!"
-    warn "Роутер перезагрузится автоматически через 2-3 минуты."
-    
-    # Выполняем sysupgrade
-    # Флаг -n означает "не сохранять настройки"
     if ! sysupgrade -n "$FW_DIR/$SYSUPGRADE_ITB"; then
-        warn "Команда sysupgrade завершилась с ошибкой (это нормально, т.к. соединение разорвётся)"
+        warn "sysupgrade завершился (соединение разорвано, это нормально)"
     fi
-    
-    success "Sysupgrade запущен. Ожидайте перезагрузки..."
-    
     return 0
 }
 
@@ -511,14 +470,13 @@ main() {
     if [ "$(id -u)" != "0" ]; then
         die "Этот скрипт должен выполняться от root"
     fi
-    success "Запуск от root подтверждён"
+    success "root"
 
-    # Проверка модели устройства (опционально)
-    info "Проверка модели устройства..."
+    # Проверка модели устройства
     if [ -f /etc/board.json ]; then
         local model=$(grep -o '"model"[[:space:]]*:[[:space:]]*"[^"]*"' /etc/board.json 2>/dev/null | cut -d'"' -f4)
         if [ -n "$model" ]; then
-            info "Модель устройства: $model"
+            success "$model"
         fi
     fi
 
@@ -526,12 +484,8 @@ main() {
     check_disk_space
 
     # Скачивание образов
-    download_images
-
-    # Вывод информации о скачанных файлах
     echo ""
-    info "Подготовленные файлы:"
-    ls -lh "$FW_DIR"
+    download_images
     echo ""
 
     # Подтверждение пользователя
@@ -542,7 +496,9 @@ main() {
     fi
 
     # Установка kmod-mtd-rw
+    echo ""
     install_mtd_rw
+    success "kmod-mtd-rw"
 
     # Прошивка загрузчика
     flash_bootloader
@@ -560,13 +516,9 @@ main() {
     # Финальное сообщение
     echo ""
     echo "=================================================================================="
-    success "Прошивка успешно завершена!"
-    echo "  Роутер перезагружается с новой прошивкой OpenWRT $OPENWRT_VER"
-    echo "  Адрес для доступа: http://192.168.1.1"
-    echo "  Логин: root (без пароля)"
+    success "Прошивка завершена! OpenWRT $OPENWRT_VER"
+    echo "  http://192.168.1.1  |  root (без пароля)"
     echo "=================================================================================="
-    echo ""
-    info "Ожидайте загрузки роутера (1-3 минуты)..."
 
     return 0
 }
