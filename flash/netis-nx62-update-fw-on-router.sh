@@ -353,7 +353,7 @@ fetch_latest_versions() {
     local matching_versions=""
     local count=0
 
-    html=$(wget -q -T 10 -O - "$releases_url" 2>/dev/null) || {
+    html=$(wget -q -T 10 --no-check-certificate -4 -O - "$releases_url" 2>/dev/null) || {
         warn "Не удалось получить список релизов с $releases_url" >&2
         return 1
     }
@@ -372,7 +372,7 @@ fetch_latest_versions() {
         checked=$((checked + 1))
         [ "$checked" -gt 20 ] && break
         local target_url="https://downloads.openwrt.org/releases/${ver}/targets/${TARGET_PATH}/"
-        if wget -q -T 5 -O /dev/null "$target_url" 2>/dev/null; then
+        if wget -q -T 5 --no-check-certificate -4 -O /dev/null "$target_url" 2>/dev/null; then
             if [ -z "$matching_versions" ]; then
                 matching_versions="$ver"
             else
