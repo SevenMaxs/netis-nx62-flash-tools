@@ -353,8 +353,8 @@ fetch_latest_versions() {
     local matching_versions=""
     local count=0
 
-    html=$(wget -q -O - "$releases_url" 2>/dev/null) || {
-        warn "Не удалось получить список релизов с $releases_url"
+    html=$(wget -q -T 10 -O - "$releases_url" 2>/dev/null) || {
+        warn "Не удалось получить список релизов с $releases_url" >&2
         return 1
     }
 
@@ -362,14 +362,17 @@ fetch_latest_versions() {
     all_versions=$(echo "$html" | sed -n 's/.*href="\([0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*\)\/".*/\1/p' | sort -t. -k1,1n -k2,2n -k3,3n -r)
 
     if [ -z "$all_versions" ]; then
-        warn "Не удалось найти стабильные версии в списке релизов"
+        warn "Не удалось найти стабильные версии в списке релизов" >&2
         return 1
     fi
 
-    # Проверяем каждую версию на наличие target
+    # Проверяем каждую версию на наличие target (не более 20)
+    local checked=0
     for ver in $all_versions; do
+        checked=$((checked + 1))
+        [ "$checked" -gt 20 ] && break
         local target_url="https://downloads.openwrt.org/releases/${ver}/targets/${TARGET_PATH}/"
-        if wget -q -O /dev/null "$target_url" 2>/dev/null; then
+        if wget -q -T 5 -O /dev/null "$target_url" 2>/dev/null; then
             if [ -z "$matching_versions" ]; then
                 matching_versions="$ver"
             else
@@ -382,13 +385,13 @@ $ver"
     done
 
     if [ -z "$matching_versions" ]; then
-        warn "Ни одна версия не содержит target ${TARGET_PATH}"
+        warn "Ни одна версия не содержит target ${TARGET_PATH}" >&2
         return 1
     fi
 
     # Выводим топ-5
-    info "Найдены версии с поддержкой ${TARGET_PATH}:"
-    echo ""
+    info "Найдены версии с поддержкой ${TARGET_PATH}:" >&2
+    echo "" >&2
     local first=true
     local i=1
     echo "$matching_versions" | while read -r ver; do
@@ -399,8 +402,8 @@ $ver"
             printf "     %s. %s\n" "$i" "$ver"
         fi
         i=$((i + 1))
-    done
-    echo ""
+    done >&2
+    echo "" >&2
 
     # Возвращаем самую новую (первую в списке)
     echo "$matching_versions" | head -1
@@ -414,21 +417,21 @@ resolve_openwrt_version() {
     local arg_version="$1"
 
     if [ -n "$arg_version" ]; then
-        info "Используется указанная версия: $arg_version"
+        info "Используется указанная версия: $arg_version" >&2
         echo "$arg_version"
         return 0
     fi
 
-    info "Определение актуальной версии OpenWRT для ${MODEL}..."
+    info "Определение актуальной версии OpenWRT для ${MODEL}..." >&2
 
     local latest
     if latest=$(fetch_latest_versions); then
-        success "Будет использована версия: $latest"
+        success "Будет использована версия: $latest" >&2
         echo "$latest"
         return 0
     fi
 
-    warn "Не удалось определить версию, используется версия по умолчанию: ${OPENWRT_VER}"
+    warn "Не удалось определить версию, используется версия по умолчанию: ${OPENWRT_VER}" >&2
     echo "$OPENWRT_VER"
     return 0
 }
