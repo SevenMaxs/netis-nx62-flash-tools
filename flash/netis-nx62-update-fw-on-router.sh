@@ -451,14 +451,32 @@ set_version_vars() {
 AUTO_CONFIRM=false
 
 main() {
+    local version_arg=""
+
     # Обработка аргументов
-    for arg in "$@"; do
-        case "$arg" in
+    while [ $# -gt 0 ]; do
+        case "$1" in
             -y|--yes)
                 AUTO_CONFIRM=true
+                shift
+                ;;
+            -v|--version)
+                if [ -z "$2" ]; then
+                    die "Аргумент --version требует указания версии (например: --version 25.12.2)"
+                fi
+                version_arg="$2"
+                shift 2
+                ;;
+            *)
+                shift
                 ;;
         esac
     done
+
+    # Определение версии OpenWRT
+    local resolved_version
+    resolved_version=$(resolve_openwrt_version "$version_arg")
+    set_version_vars "$resolved_version"
 
     echo ""
     echo "=================================================================================="
