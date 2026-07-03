@@ -389,24 +389,8 @@ $ver"
         return 1
     fi
 
-    # Выводим топ-5
-    info "Найдены версии с поддержкой ${TARGET_PATH}:" >&2
-    echo "" >&2
-    local first=true
-    local i=1
-    echo "$matching_versions" | while read -r ver; do
-        if [ "$first" = true ]; then
-            printf "     %s. ${GREEN}%-10s${NC} ${BLUE}← будет использована${NC}\n" "$i" "$ver"
-            first=false
-        else
-            printf "     %s. %s\n" "$i" "$ver"
-        fi
-        i=$((i + 1))
-    done >&2
-    echo "" >&2
-
-    # Возвращаем самую новую (первую в списке)
-    echo "$matching_versions" | head -1
+    # Возвращаем список подходящих версий (по одной на строку)
+    echo "$matching_versions"
     return 0
 }
 
@@ -424,8 +408,43 @@ resolve_openwrt_version() {
 
     info "Определение актуальной версии OpenWRT для ${MODEL}..." >&2
 
-    local latest
-    if latest=$(fetch_latest_versions); then
+    local versions
+    if versions=$(fetch_latest_versions) && [ -n "$versions" ]; then
+        # Выводим список доступных версий
+        info "Найдены версии с поддержкой ${TARGET_PATH}:" >&2
+        echo "" >&2
+        local i=1
+        echo "$versions" | while read -r ver; do
+            if [ $i -eq 1 ]; then
+                printf "     %s. ${GREEN}%-10s${NC} ${BLUE}← по умолчанию${NC}\n" "$i" "$ver" >&2
+            else
+                printf "     %s. %s\n" "$i" "$ver" >&2
+            fi
+            i=$((i + 1))
+        done
+        echo "" >&2
+
+        # Запрос выбора у пользователя (только в интерактивном режиме)
+        if [ "$AUTO_CONFIRM" = false ]; then
+            printf "Выберите версию [1-5, Enter = самая новая]: " >&2
+            read choice < /dev/tty
+
+            if [ -n "$choice" ]; then
+                if [ "$choice" -ge 1 ] 2>/dev/null && [ "$choice" -le 5 ] 2>/dev/null; then
+                    local selected
+                    selected=$(echo "$versions" | sed -n "${choice}p")
+                    if [ -n "$selected" ]; then
+                        success "Будет использована версия: $selected" >&2
+                        echo "$selected"
+                        return 0
+                    fi
+                fi
+                warn "Некорректный выбор, используется самая новая" >&2
+            fi
+        fi
+
+        local latest
+        latest=$(echo "$versions" | head -1)
         success "Будет использована версия: $latest" >&2
         echo "$latest"
         return 0
