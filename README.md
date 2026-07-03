@@ -10,7 +10,7 @@
 │   └── netis-nx62-config-backup.sh          # Бекап конфигурационных файлов
 ├── flash/      # Скрипты для прошивки
 │   ├── netis-nx62-flash-fw-on-linux.sh      # Полная прошивка с ПК (Linux)
-│   └── netis-nx62-update-fw-on-router.sh    # Обновление прошивки на роутере (On-Router)
+│   └── netis-nx62-update-fw-on-router.sh    # Обновление прошивки на роутере (с автоопределением версии)
 ├── docs/       # Документация
 │   ├── 01-SSH-CONNECTION.md                 # Настройка SSH доступа
 │   ├── 01-SSH-CONNECTION-WINDOWS.md         # Настройка SSH доступа на Windows
