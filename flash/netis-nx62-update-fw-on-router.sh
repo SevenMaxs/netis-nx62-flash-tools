@@ -40,19 +40,19 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
-# Конфигурация OpenWRT
-readonly OPENWRT_VER="25.12.2"
+# Статическая конфигурация (не зависит от версии)
 readonly TARGET_PATH="mediatek/filogic"      # для URL
 readonly TARGET_NAME="mediatek-filogic"      # для имени файла
 readonly MODEL="netcore_n60-pro"
-readonly BASE_URL="https://downloads.openwrt.org/releases/${OPENWRT_VER}/targets/${TARGET_PATH}/"
-
-# Имена файлов для скачивания
-readonly UBOOT_FIP="openwrt-${OPENWRT_VER}-${TARGET_NAME}-${MODEL}-bl31-uboot.fip"
-readonly PRELOADER_BIN="openwrt-${OPENWRT_VER}-${TARGET_NAME}-${MODEL}-preloader.bin"
-readonly SYSUPGRADE_ITB="openwrt-${OPENWRT_VER}-${TARGET_NAME}-${MODEL}-squashfs-sysupgrade.itb"
-
 readonly FW_DIR="/tmp/tmp"
+
+# Версия по умолчанию (переопределяется через -v или автоопределение)
+OPENWRT_VER="25.12.5"
+# Переменные, зависящие от версии (устанавливаются в main() после resolve)
+BASE_URL=""
+UBOOT_FIP=""
+PRELOADER_BIN=""
+SYSUPGRADE_ITB=""
 
 # ==============================================================================
 # Вспомогательные функции
