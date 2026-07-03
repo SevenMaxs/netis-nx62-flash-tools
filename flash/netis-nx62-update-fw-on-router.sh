@@ -370,7 +370,7 @@ resolve_openwrt_version() {
     local versions
     if versions=$(fetch_latest_versions) && [ -n "$versions" ]; then
         # Выводим список доступных версий
-        info "Найдены версии с поддержкой ${TARGET_PATH}:" >&2
+        info "Последние 5 версий с поддержкой ${TARGET_PATH}:" >&2
         echo "" >&2
         local i=1
         echo "$versions" | while read -r ver; do
@@ -458,13 +458,6 @@ main() {
     local resolved_version
     resolved_version=$(resolve_openwrt_version "$version_arg")
     set_version_vars "$resolved_version"
-
-    echo ""
-    echo "=================================================================================="
-    echo "  Прошивка Netis NX62 / Netcore N60 Pro непосредственно на роутере"
-    echo "  Версия OpenWRT: $OPENWRT_VER"
-    echo "=================================================================================="
-    echo ""
 
     # Проверка прав root
     if [ "$(id -u)" != "0" ]; then
