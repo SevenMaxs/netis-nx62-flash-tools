@@ -341,6 +341,110 @@ confirm_action() {
     esac
 }
 
+# -----------------------------------------------------------------------------
+# Функция получения списка актуальных версий OpenWRT
+# Возвращает самую новую версию с поддержкой target
+# Побочный эффект: выводит топ-5 найденных версий на экран
+# -----------------------------------------------------------------------------
+fetch_latest_versions() {
+    local releases_url="https://downloads.openwrt.org/releases/"
+    local html
+    local all_versions
+    local matching_versions=""
+    local count=0
+
+    html=$(wget -q -O - "$releases_url" 2>/dev/null) || {
+        warn "Не удалось получить список релизов с $releases_url"
+        return 1
+    }
+
+    # Извлекаем все стабильные версии из href="X.Y.Z/"
+    all_versions=$(echo "$html" | sed -n 's/.*href="\([0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*\)\/".*/\1/p' | sort -t. -k1,1n -k2,2n -k3,3n -r)
+
+    if [ -z "$all_versions" ]; then
+        warn "Не удалось найти стабильные версии в списке релизов"
+        return 1
+    fi
+
+    # Проверяем каждую версию на наличие target
+    for ver in $all_versions; do
+        local target_url="https://downloads.openwrt.org/releases/${ver}/targets/${TARGET_PATH}/"
+        if wget -q -O /dev/null "$target_url" 2>/dev/null; then
+            if [ -z "$matching_versions" ]; then
+                matching_versions="$ver"
+            else
+                matching_versions="$matching_versions
+$ver"
+            fi
+            count=$((count + 1))
+            [ "$count" -ge 5 ] && break
+        fi
+    done
+
+    if [ -z "$matching_versions" ]; then
+        warn "Ни одна версия не содержит target ${TARGET_PATH}"
+        return 1
+    fi
+
+    # Выводим топ-5
+    info "Найдены версии с поддержкой ${TARGET_PATH}:"
+    echo ""
+    local first=true
+    local i=1
+    echo "$matching_versions" | while read -r ver; do
+        if [ "$first" = true ]; then
+            printf "     %s. ${GREEN}%-10s${NC} ${BLUE}← будет использована${NC}\n" "$i" "$ver"
+            first=false
+        else
+            printf "     %s. %s\n" "$i" "$ver"
+        fi
+        i=$((i + 1))
+    done
+    echo ""
+
+    # Возвращаем самую новую (первую в списке)
+    echo "$matching_versions" | head -1
+    return 0
+}
+
+# -----------------------------------------------------------------------------
+# Функция разрешения версии OpenWRT (аргумент или автоопределение)
+# -----------------------------------------------------------------------------
+resolve_openwrt_version() {
+    local arg_version="$1"
+
+    if [ -n "$arg_version" ]; then
+        info "Используется указанная версия: $arg_version"
+        echo "$arg_version"
+        return 0
+    fi
+
+    info "Определение актуальной версии OpenWRT для ${MODEL}..."
+
+    local latest
+    if latest=$(fetch_latest_versions); then
+        success "Будет использована версия: $latest"
+        echo "$latest"
+        return 0
+    fi
+
+    warn "Не удалось определить версию, используется версия по умолчанию: ${OPENWRT_VER}"
+    echo "$OPENWRT_VER"
+    return 0
+}
+
+# -----------------------------------------------------------------------------
+# Установка переменных, зависящих от версии
+# -----------------------------------------------------------------------------
+set_version_vars() {
+    local ver="$1"
+    OPENWRT_VER="$ver"
+    BASE_URL="https://downloads.openwrt.org/releases/${OPENWRT_VER}/targets/${TARGET_PATH}/"
+    UBOOT_FIP="openwrt-${OPENWRT_VER}-${TARGET_NAME}-${MODEL}-bl31-uboot.fip"
+    PRELOADER_BIN="openwrt-${OPENWRT_VER}-${TARGET_NAME}-${MODEL}-preloader.bin"
+    SYSUPGRADE_ITB="openwrt-${OPENWRT_VER}-${TARGET_NAME}-${MODEL}-squashfs-sysupgrade.itb"
+}
+
 # ==============================================================================
 # Основная функция
 # ==============================================================================
